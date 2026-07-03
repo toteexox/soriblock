@@ -1,0 +1,567 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>소리블록 1단계 과정 훈련 드릴</title>
+<!-- Inter 서체 추가 -->
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700&display=swap">
+<style>
+  :root {
+    --ink: #2b241d;
+    --paper: #fffaf3;
+    --card: #ffffff;
+    --orange: #ff7a2f;
+    --orange-deep: #e6601a;
+    --orange-pale: #ffe6d1;
+    --green: #2f9e6e;
+    --green-pale: #e3f6ec;
+    --line: #eee0d0;
+    --muted: #9a8f80;
+    --purple: #7c3aed;
+    --purple-pale: #f3e8ff;
+    --blue: #0284c7;
+    --blue-pale: #e0f2fe;
+    
+    /* 성취도 상태 색상 정의 */
+    --status-pass: #10b981;
+    --status-pron: #f59e0b;
+    --status-stut: #ef4444;
+    --status-fail: #7f1d1d;
+    --status-none: #6b7280;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: var(--paper); color: var(--ink);
+    font-family: 'Pretendard', sans-serif;
+    display: flex; flex-direction: column; align-items: center; padding: 20px 10px;
+  }
+  .wrap { width: 100%; max-width: 700px; }
+  header { text-align: center; margin-bottom: 25px; }
+  h1 { font-size: 24px; font-weight: 800; color: var(--ink); margin: 5px 0; }
+  
+  .mode-tabs { display: flex; gap: 8px; margin-bottom: 20px; width: 100%; }
+  .tab-btn {
+    flex: 1; padding: 14px; border: 1px solid var(--line); background: var(--card);
+    border-radius: 12px; cursor: pointer; font-weight: 700; font-size: 15px; color: var(--muted);
+    transition: all 0.2s; text-align: center;
+  }
+  .tab-btn.active { background: var(--orange); color: #fff; border-color: var(--orange); }
+  
+  .page { display: none; width: 100%; }
+  .page.active { display: block; }
+  
+  /* 제어 바 스타일 */
+  .control-bar {
+    display: flex; flex-direction: column; gap: 12px; margin-bottom: 16px; background: var(--card); border: 1px solid var(--line); border-radius: 16px; padding: 14px; box-shadow: 0 4px 10px rgba(60,40,10,0.02);
+  }
+  .filter-row { display: flex; flex-direction: column; gap: 6px; }
+  .filter-title { font-size: 12.5px; font-weight: 800; color: var(--muted); display: flex; justify-content: space-between; }
+  .filter-chips { display: flex; gap: 4px; flex-wrap: wrap; align-items: center; }
+  
+  .chip-btn {
+    padding: 6px 10px; border: 1px solid var(--line); background: #fafafa; border-radius: 20px;
+    font-size: 12px; font-weight: 700; color: #555; cursor: pointer; transition: all 0.15s;
+  }
+  .chip-btn.active[data-filter="all"] { background: var(--ink); color: #fff; border-color: var(--ink); }
+  .chip-btn.active[data-filter="pass"] { background: var(--status-pass); color: #fff; border-color: var(--status-pass); }
+  .chip-btn.active[data-filter="pron"] { background: var(--status-pron); color: #fff; border-color: var(--status-pron); }
+  .chip-btn.active[data-filter="stut"] { background: var(--status-stut); color: #fff; border-color: var(--status-stut); }
+  .chip-btn.active[data-filter="fail"] { background: var(--status-fail); color: #fff; border-color: var(--status-fail); }
+  .chip-btn.active[data-filter="none"] { background: var(--status-none); color: #fff; border-color: var(--status-none); }
+
+  /* 글로벌 오디오 컨트롤 로우 */
+  .audio-global-row { display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 700; color: var(--ink); border-bottom: 1px dashed var(--line); padding-bottom: 10px; margin-bottom: 4px; }
+  .speed-btn-group { display: flex; gap: 4px; }
+  .speed-btn { padding: 4px 8px; border: 1px solid var(--line); background: #fff; border-radius: 6px; font-size: 12px; cursor: pointer; font-weight: 700; color: var(--muted); }
+  .speed-btn.active { background: var(--blue); color: #fff; border-color: var(--blue); }
+
+  .toggle-row { display: flex; justify-content: space-between; align-items: center; border-top: 1px dashed var(--line); padding-top: 10px; }
+  .toggle-label { display: flex; align-items: center; gap: 8px; font-size: 13.5px; font-weight: 700; color: var(--ink); cursor: pointer; }
+  .toggle-input { display: none; }
+  .toggle-switch { position: relative; width: 44px; height: 24px; background: #d1d5db; border-radius: 12px; transition: background 0.2s; }
+  .toggle-switch::after { content: ''; position: absolute; top: 2px; left: 2px; width: 20px; height: 20px; background: #fff; border-radius: 50%; transition: left 0.2s; box-shadow: 0 1px 3px rgba(0,0,0,0.2); }
+  .toggle-input:checked + .toggle-switch { background: var(--orange); }
+  .toggle-input:checked + .toggle-switch::after { left: 22px; }
+
+  /* 학습모드 스타일 */
+  .list-item { background: var(--card); border: 1px solid var(--line); border-radius: 16px; padding: 20px; margin-bottom: 20px; box-shadow: 0 4px 12px rgba(60,40,10,0.04); cursor: pointer; transition: background 0.2s; }
+  .list-item:hover { background: #fffdfa; }
+  .list-item.playing-now { border: 2px solid var(--blue); background: var(--blue-pale); }
+  .badge-row { display: flex; gap: 6px; margin-bottom: 12px; flex-wrap: wrap; align-items: center; }
+  .badge { font-size: 11px; font-weight: 700; padding: 4px 8px; border-radius: 6px; text-transform: uppercase; }
+  .badge.num { background: #f3f4f6; color: #4b5563; }
+  .badge.part-num { background: var(--orange-pale); color: var(--orange-deep); border: 1px solid #fed7aa; }
+  
+  .badge.start { background: #e0f2fe; color: #0369a1; border: 1px solid #bae6fd; }
+  .badge.core { background: #fef3c7; color: #b45309; border: 1px solid #fde68a; }
+  .badge.detail { background: #fce7f3; color: #be185d; border: 1px solid #fbcfe8; }
+  
+  .kr-box { font-size: 17px; font-weight: 700; color: #4a3e3d; line-height: 1.5; margin-bottom: 12px; word-break: keep-all; }
+  .en-box { font-size: 18px; font-weight: 700; color: #111; line-height: 1.4; margin-bottom: 6px; }
+  .en-box b { color: var(--orange-deep); font-weight: 800; text-decoration: underline; }
+  
+  .ipa-box { font-size: 14.5px; color: var(--purple); font-family: 'Inter', sans-serif; margin-bottom: 10px; padding: 4px 0; display: inline-block; }
+  
+  /* 연습모드 스타일 */
+  .practice-container { display: flex; flex-direction: column; gap: 16px; }
+  .p-card { background: var(--card); border: 1px solid var(--line); border-radius: 16px; padding: 20px; box-shadow: 0 6px 16px rgba(60,40,10,0.06); min-height: 200px; }
+  .p-kr { font-size: 19px; font-weight: 700; color: #2b241d; line-height: 1.6; background: #faf5ee; padding: 12px; border-radius: 8px; border-left: 4px solid var(--orange); margin-bottom: 12px; white-space: pre-line; }
+  .p-reveal-btn { width: 100%; padding: 12px; background: var(--orange); color: #fff; border: none; border-radius: 10px; font-size: 15px; font-weight: 700; cursor: pointer; margin-bottom: 12px; }
+  .p-result { background: #f9fafb; border: 1px dashed var(--line); padding: 15px; border-radius: 10px; margin-bottom: 12px; }
+  
+  /* 성취도 상태 선택 섹션 */
+  .status-section { margin-top: 15px; border-top: 1px dashed var(--line); padding-top: 15px; }
+  .status-title { font-size: 13px; font-weight: 700; color: var(--muted); margin-bottom: 8px; }
+  .status-group { display: flex; gap: 6px; }
+  .status-btn { flex: 1; padding: 10px 4px; border: 1px solid var(--line); background: var(--card); border-radius: 8px; font-size: 13px; font-weight: 700; color: var(--ink); cursor: pointer; transition: all 0.2s; text-align: center; }
+  .status-btn[data-status="pass"].active { background: var(--status-pass); color: #fff; border-color: var(--status-pass); }
+  .status-btn[data-status="pron"].active { background: var(--status-pron); color: #fff; border-color: var(--status-pron); }
+  .status-btn[data-status="stut"].active { background: var(--status-stut); color: #fff; border-color: var(--status-stut); }
+  .status-btn[data-status="fail"].active { background: var(--status-fail); color: #fff; border-color: var(--status-fail); }
+
+  .audio-controls { display: flex; align-items: center; gap: 10px; margin-top: 10px; background: #f3f4f6; padding: 10px; border-radius: 10px; flex-wrap: wrap; }
+  .audio-btn { padding: 8px 14px; border: none; border-radius: 6px; font-weight: 700; cursor: pointer; font-size: 13px; transition: background 0.2s; }
+  .btn-rec { background: #ef4444; color: white; }
+  .btn-rec.recording { background: #111827; animation: blink 1s infinite; }
+  .btn-play { background: #10b981; color: white; }
+  .btn-play:disabled { background: #d1d5db; color: #9ca3af; cursor: not-allowed; }
+  .btn-native { background: var(--blue); color: white; }
+  
+  .p-nav { display: flex; justify-content: space-between; gap: 10px; margin-top: 10px; }
+  .nav-btn { flex: 1; padding: 12px; border: none; background: var(--ink); color: white; border-radius: 10px; font-weight: 700; cursor: pointer; }
+  .nav-btn:disabled { background: var(--line); color: var(--muted); cursor: not-allowed; }
+
+  @keyframes blink { 0% { opacity: 1; } 50% { opacity: 0.4; } 100% { opacity: 1; } }
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <header>
+    <h1>Soritune 소리블록 1단계 과정</h1>
+    <div style="color: var(--muted); font-size: 13px; margin-top: 4px;">Raina 코치님 발화 스크립트 드릴 💨</div>
+  </header>
+
+  <div class="mode-tabs">
+    <button class="tab-btn active" id="tab-learn" onclick="switchMode('learn')">📖 1. 학습모드 (전체 나열)</button>
+    <button class="tab-btn" id="tab-practice" onclick="switchMode('practice')">🎯 2. 연습모드 (문장별 격파)</button>
+  </div>
+
+  <!-- 학습모드 페이지 -->
+  <div id="page-learn" class="page active">
+    <div class="control-bar" style="margin-bottom: 12px; padding: 10px 14px;">
+      <div class="audio-global-row">
+        <span>⏱️ 원어민 음성 재생 속도 조절</span>
+        <div class="speed-btn-group" id="learn-speed-group">
+          <button class="speed-btn" onclick="setGlobalSpeed(0.2, this)">x0.2</button>
+          <button class="speed-btn" onclick="setGlobalSpeed(0.5, this)">x0.5</button>
+          <button class="speed-btn" onclick="setGlobalSpeed(0.7, this)">x0.7</button>
+          <button class="speed-btn active" onclick="setGlobalSpeed(1.0, this)">x1.0</button>
+        </div>
+      </div>
+    </div>
+    <div id="learn-list-container"></div>
+  </div>
+
+  <!-- 연습모드 페이지 -->
+  <div id="page-practice" class="page">
+    <div class="control-bar">
+      <div class="audio-global-row">
+        <span>⏱️ 원어민 음성 재생 속도 조절</span>
+        <div class="speed-btn-group" id="practice-speed-group">
+          <button class="speed-btn" onclick="setGlobalSpeed(0.2, this)">x0.2</button>
+          <button class="speed-btn" onclick="setGlobalSpeed(0.5, this)">x0.5</button>
+          <button class="speed-btn" onclick="setGlobalSpeed(0.7, this)">x0.7</button>
+          <button class="speed-btn active" onclick="setGlobalSpeed(1.0, this)">x1.0</button>
+        </div>
+      </div>
+      <div class="filter-row">
+        <div class="filter-title">
+          <span>🎯 연습 타겟 필터 선택 (중복 가능)</span>
+        </div>
+        <div class="filter-chips">
+          <button class="chip-btn active" data-filter="all" onclick="selectFilter('all')">전체 문장 보기</button>
+          <button class="chip-btn" data-filter="pass" onclick="selectFilter('pass')">통과 🟢</button>
+          <button class="chip-btn" data-filter="pron" onclick="selectFilter('pron')">발음 🟡</button>
+          <button class="chip-btn" data-filter="stut" onclick="selectFilter('stut')">버벅 🟠</button>
+          <button class="chip-btn" data-filter="fail" onclick="selectFilter('fail')">불가 🔴</button>
+          <button class="chip-btn" data-filter="none" onclick="selectFilter('none')">미체크 ⚪</button>
+        </div>
+      </div>
+      <div class="toggle-row">
+        <label class="toggle-label">
+          <span>🔀 필터링된 문장 랜덤 섞기</span>
+          <input type="checkbox" id="random-toggle" class="toggle-input" onchange="toggleRandom(this.checked)">
+          <div class="toggle-switch"></div>
+        </label>
+      </div>
+    </div>
+
+    <div class="practice-container">
+      <div class="p-card" id="practice-card"></div>
+      <div class="p-nav">
+        <button class="nav-btn" id="prev-btn" onclick="movePractice(-1)">이전 문장</button>
+        <button class="nav-btn" id="next-btn" onclick="movePractice(1)">다음 문장</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 무지연 재생용 고정 오디오 플레이어 상주 -->
+<audio id="native-player" preload="auto" src="audio/soriblock.wav"></audio>
+
+<script>
+// 제공해주신 마커 이미지 시간대 기준으로 100% 매칭 완료된 데이터 영역입니다.
+const DATA = [
+  { id: "PART13-01", originalIdx: 0, type: "CORE", kr: "A: 어디에 있어요?", en: "Where **are** you?", ipa: "/wer ɑr ju?/", start: 0.000, end: 2.080 },
+  { id: "PART13-01", originalIdx: 1, type: "CORE", kr: "B: 식료품을 사러 마트에 가는 중이에요.", en: "I’m on my **way** to the **su**per**mar**ket to **buy** some **gro**ceries.", ipa: "/aɪm ɑn maɪ weɪ tə ðə ˈsuːpərmɑrkɪt tə baɪ sʌm ˈɡroʊsəriz/", start: 2.080, end: 7.010 },
+  { id: "PART13-06", originalIdx: 2, type: "START", kr: "A: 내일 비가 올 것 같아요?", en: "Do you **think** it will **rain** to**mor**row?", ipa: "/du ju θɪŋk ɪt wɪl reɪn təˈmɑroʊ?/", start: 7.010, end: 10.130 },
+  { id: "PART13-06", originalIdx: 3, type: "START", kr: "B: 오늘 밤 기온이 내려가면 비가 올 가능성이 높아요.", en: "It’s **like**ly to **rain** if the **tem**pe**ra**ture **drops** to**night**.", ipa: "/ɪts ˈlaɪkli tə reɪn ɪf ðə ˈtempərətʃər drɑps təˈnaɪt/", start: 10.140, end: 14.180 },
+  { id: "PART13-09", originalIdx: 4, type: "START", kr: "A: 내일 공원에 올 수 있어요?", en: "Can you **come** to the **park** to**mor**row?", ipa: "/kæn ju kʌm tə ðə pɑːrk təˈmɑroʊ?/", start: 14.180, end: 17.230 },
+  { id: "PART13-09", originalIdx: 5, type: "START", kr: "B: 이미 약속이 있어서 어려울 것 같아요.", en: "I’m a**fraid** that I al**rea**dy **have** **plans**.", ipa: "/aɪm əˈfreɪd ðæt aɪ ɔːlˈredi hæv plænz/", start: 17.230, end: 22.070 },
+  { id: "PART14-02", originalIdx: 6, type: "CORE", kr: "학생들이 도서관에서 시험 공부를 하고 있습니다.", en: "The **stu**dents are **stu**dying for their ex**ams** at the **li**bra**ry**.", ipa: "/ðə ˈstuːdənts ɑr ˈstʌdiɪŋ fər ðer ɪɡˈzæmz æt ðə ˈlaɪbreri/", start: 22.070, end: 26.200 },
+  { id: "PART14-08", originalIdx: 7, type: "DETAIL", kr: "어제 정비공이 차를 수리했어요.", en: "The **car** was re**paired** by the me**cha**nic **yes**ter**day**.", ipa: "/ðə kɑr wəz rɪˈperd baɪ ðə məˈkænɪk ˈjestərdeɪ/", start: 26.200, end: 30.090 },
+  { id: "PART14-10", originalIdx: 8, type: "CORE", kr: "암이 사라졌다.", en: "My **can**cer was **gone**.", ipa: "/maɪ ˈkænsər wəz ɡɑːn/", start: 30.090, end: 33.060 },
+  { id: "PART15-07", originalIdx: 9, type: "START", kr: "집을 살 수 있을 만큼의 돈을 모으기 위해 노력하고 있습니다.", en: "I’m **just** **try**ing to **save** e**nough** **mo**ney to **buy** a **house**.", ipa: "/aɪm dʒʌst ˈtraɪɪŋ tə seɪv əˈnʌf ˈmʌni tə baɪ ə haʊs/", start: 33.060, end: 38.010 },
+  { id: "PART15-12", originalIdx: 10, type: "START", kr: "A: 마크에 대해 들었어?", en: "Did you **hear** a**bout** **Mark**?", ipa: "/dɪd ju hɪr əˈbaʊt mɑrk?/", start: 38.010, end: 40.200 },
+  { id: "PART15-12", originalIdx: 11, type: "START", kr: "B: 아니, 무슨 일인데?", en: "**No**, **what’s** **up** with **him**?", ipa: "/noʊ, wʌts ʌp wɪð hɪm?/", start: 40.200, end: 43.130 },
+  { id: "PART15-12", originalIdx: 12, type: "START", kr: "A: 그는 여자친구에게 기념일에 프로포즈할 생각이야.", en: "He’s **think**ing of pro**pos**ing to his **girl**friend on their a**nni****ver**sa**ry**.", ipa: "/hiz ˈθɪŋkɪŋ əv prəˈpoʊzɪŋ tə hɪz ˈɡɜrlfrend ɑn ðer ˌæniˈvɜrsəri/", start: 43.130, end: 48.040 },
+  { id: "PART15-14", originalIdx: 13, type: "START", kr: "A: 새 영화 봤어?", en: "Did you **see** that **new** **mo**vie?", ipa: "/dɪd ju si ðæt nu ˈmuvi?/", start: 48.040, end: 50.230 },
+  { id: "PART15-14", originalIdx: 14, type: "START", kr: "B: superhero가 나오는 영화 말하는 거야?", en: "Are you **talk**ing a**bout** the **one** with the **su**per**he**ro?", ipa: "/ɑr jʊ ˈtɔːkɪŋ əˈbaʊt ðə wʌn wɪð ðə ˈsuːpərhɪroʊ?/", start: 50.230, end: 54.120 },
+  { id: "PART15-15", originalIdx: 15, type: "START", kr: "당신이 하는 일을 말하는 것이 아니라 당신이 어떤 사람인지에 대해 말하는 거예요.", en: "I’m **not** **talk**ing a**bout** **what** you **do**, but I’m **talk**ing a**bout** **who** you **are**.", ipa: "/aɪm nɑt ˈtɔːkɪŋ əˈbaʊt wʌt ju du, aɪm ˈtɔːkɪŋ əˈbaʊt hu ju ɑr/", start: 54.120, end: 59.170 },
+  { id: "PART18-03", originalIdx: 16, type: "START", kr: "나는 결과에 만족해요.", en: "I’m **sa**tisfied with the re**sults**.", ipa: "/aɪm ˈsætɪsfaɪd wɪð ðə rɪˈzʌlts/", start: 59.170, end: 62.120 },
+  { id: "PART18-05", originalIdx: 17, type: "START", kr: "A: 왜 아무것도 안 먹고 있어요?", en: "Why **aren’t** you **ea**ting **a**nything?", ipa: "/waɪ ɑrnt ju ˈitɪŋ ˈeniθɪŋ?/", start: 62.120, end: 65.000 },
+  { id: "PART18-05", originalIdx: 18, type: "START", kr: "B: 칼로리가 걱정돼요. 살을 빼려고 노력 중이거든요.", en: "I’m **wor**ried a**bout** the **ca**lories. I’ve been **try**ing to **lose** **weight**.", ipa: "/aɪm ˈwʌrid əˈbaʊt ðə ˈkæləriːz. aɪv bɪn ˈtraɪɪŋ tə luz weɪt/", start: 65.000, end: 69.070 },
+  { id: "PART18-07", originalIdx: 19, type: "START", kr: "그녀는 직업 때문에 아침 일찍 일어나는 데 익숙해요.", en: "She is **u**sed to **wa**king up **ear**ly in the **mor**ning be**cause** of her **job**.", ipa: "/ʃi ɪz just tə ˈweɪkɪŋ ʌp ˈɜrli ɪn ðə ˈmɔrnɪŋ bɪkɔːz əv hər dʒɑb/", start: 69.070, end: 73.220 },
+  { id: "PART22-03", originalIdx: 20, type: "START", kr: "A: 오늘은 무엇을 하고 싶으세요?", en: "**What** do you **want** to **do** to**day**?", ipa: "/wʌt də ju wɑːnt tə du təˈdeɪ?/", start: 73.220, end: 76.000 },
+  { id: "PART22-03", originalIdx: 21, type: "START", kr: "B: 해변에 가서 햇볕을 쬐며 휴식을 취하고 싶어요.", en: "I **wa**nna **go** to the **beach** and re**lax** in the **sun**.", ipa: "/aɪ ˈwɑːnə ɡoʊ tə ðə biːtʃ ənd rɪˈlæks ɪn ðə sʌn/", start: 76.000, end: 80.010 },
+  { id: "PART22-07", originalIdx: 22, type: "START", kr: "프랑스어를 유창하게 말하고 싶나요?", en: "Do you **wa**nna be **a**ble to **speak** **flu**ent **French**?", ipa: "/du jʊ ˈwɑːnə bi ˈeɪbl tə spiːk ˈfluənt frentʃ?/", start: 80.010, end: 83.040 },
+  { id: "PART22-08", originalIdx: 23, type: "START", kr: "여행 전에 호텔 방을 예약하고 싶지 않으세요?", en: "**Don’t** you **wa**nna **make** a **re**ser**va**tion for a ho**tel** **room** be**fore** your **trip**?", ipa: "/doʊnt jʊ ˈwɑːnə meɪk ə ˌrezərˈveɪʃn fər ə hoʊˈtel ruːm bɪˈfɔr jʊr trɪp?/", start: 83.040, end: 88.120 },
+  { id: "PART24-01", originalIdx: 24, type: "START", kr: "그가 그렇게 심각한 질병을 앓고 있는지 전혀 몰랐어요.", en: "I **had** **no** i**de**a that he **had** **such** a **se**rious **me**dical con**di**tion.", ipa: "/aɪ  hæd noʊ aɪˈdiə ðæt hi hæd sʌtʃ ə ˈsɪriəs ˈmedɪkəl kənˈdɪʃən/", start: 88.120, end: 92.220 },
+  { id: "PART24-02", originalIdx: 25, type: "START", kr: "그녀가 임신했다는 사실을 알았을 때 어떻게 반응해야 할지 몰랐어요.", en: "**When** I **found** out that she was **preg**nant, I **had** **no** i**de**a **how** to re**act**.", ipa: "/wen aɪ faʊnd aʊt ðæt ʃi wəz ˈpreɡnənt, aɪ hæd noʊ aɪˈdiə haʊ tə riˈækt/", start: 92.220, end: 98.060 },
+  { id: "PART24-05", originalIdx: 26, type: "START", kr: "A: 오늘 아침 왜 이렇게 일찍 전화했어?", en: "**Why** did you **call** me **so** **ear**ly this **mor**ning?", ipa: "/waɪ dɪd jʊ kɔːl mi soʊ ˈɜːrli ðɪs ˈmɔːrnɪŋ?/", start: 98.060, end: 101.070 },
+  { id: "PART24-05", originalIdx: 27, type: "START", kr: "B: 다른 사람보다 먼저 생일 축하한다고 말하고 싶었을 뿐이야.", en: "I **just** **wan**ted to **wish** you a **ha**ppy **birth**day be**fore** **a**nyone **else** **did**.", ipa: "/aɪ dʒʌst ˈwɑːntəd tə wɪʃ jʊ ə ˈhæpi ˈbɜːrθdeɪ bɪˈfɔr ˈeniwʌn els dɪd/", start: 101.070, end: 106.010 },
+  { id: "PART34-01", originalIdx: 28, type: "START", kr: "A: 그가 왜 집을 청소하고 있어요?", en: "**Why** is he **clean**ing the **house**?", ipa: "/waɪ ɪz hi ˈkliːnɪŋ ðə haʊs?/", start: 106.010, end: 108.050 },
+  { id: "PART34-01", originalIdx: 29, type: "START", kr: "B: 그의 엄마가 저녁 전에 청소하게 했어요.", en: "His **mom** **made** him **clean** it be**fore** **din**ner.", ipa: "/hɪz mɑm meɪd hɪm kliːn ɪt bɪˈfɔːr ˈdɪnər/", start: 108.050, end: 111.130 },
+  { id: "PART34-09", originalIdx: 30, type: "START", kr: "A: 노트북을 써도 될까요?", en: "Can I **use** your **lap**top?", ipa: "/kæn aɪ juːz jɔːr ˈlæptɑp?/", start: 111.130, end: 113.200 },
+  { id: "PART34-09", originalIdx: 31, type: "START", kr: "B: 물론이죠, 업무를 위해 쓰게 해줄게요.", en: "**Sure**, I’ll **let** you **use** it for your **work**.", ipa: "/ʃʊr, aɪl let ju juːz ɪt fɔːr wɜːrk/", start: 113.200, end: 117.060 },
+  { id: "PART37-04", originalIdx: 32, type: "START", kr: "A: 배고픈데 요리할 기분은 아니야.", en: "I’m **hun**gry, but I **don’t** **feel** like **cook**ing.", ipa: "/aɪm ˈhʌŋɡri, bʌt aɪ doʊnt fiːl laɪk ˈkʊkɪŋ/", start: 117.060, end: 120.120 },
+  { id: "PART37-04", originalIdx: 33, type: "START", kr: "B: 피자 시키는 게 어때?", en: "**Why** **don’t** we **or**der some **piz**za?", ipa: "/waɪ doʊnt wi ˈɔːrdər sʌm ˈpiːtsə?/", start: 120.120, end: 123.170 },
+  { id: "PART37-08", originalIdx: 34, type: "START", kr: "A: 하루 쉬려고 생각 중이야.", en: "I’m **thin**king a**bout** **ta**king a **day** **off**.", ipa: "/aɪm ˈtheta;ŋkɪŋ əˈbaʊt ˈteɪkɪŋ ə deɪ ɔf/", start: 123.170, end: 126.210 },
+  { id: "PART37-08", originalIdx: 35, type: "START", kr: "B: 짧은 여행 계획하는 게 어때?", en: "**Why** **not** **plan** a **short** **trip**?", ipa: "/waɪ nɑt plæn ə ʃɔrt trɪp?/", start: 126.210, end: 131.070 },
+  { id: "PART37-05", originalIdx: 36, type: "START", kr: "A: 왜 잠깐이라도 쉴 수 없는 거야?", en: "**Why** **can’t** we **just** **take** a **break**?", ipa: "/waɪ kænt wi dʒʌst teɪk ə breɪk?/", start: 131.070, end: 133.200 },
+  { id: "PART37-05", originalIdx: 37, type: "START", kr: "B: 마감일이 내일이고, 아직 끝내지 못했으니까.", en: "Be**cause** the **dead**line is to**mor**row, and we’re **not** **fi**nished **yet**.", ipa: "/bɪˈkɔːz ðə ˈdedlaɪn ɪz təˈmɑroʊ, ənd wɪr nɑt ˈfɪnɪʃt jet/", start: 133.200, end: 139.210 },
+  { id: "PART45-06", originalIdx: 38, type: "START", kr: "A: 어릴 때 여행할 기회를 놓쳤어.", en: "I **missed** the **chance** to **tra**vel when I was **youn**ger.", ipa: "/aɪ mɪst ðə tʃæns tə ˈtrævəl wen aɪ wəz ˈjʌŋɡər/", start: 139.210, end: 143.070 },
+  { id: "PART45-06", originalIdx: 39, type: "START", kr: "B: 그 기회를 놓치지 말았어야 했어.", en: "You **shoul**dn’t have **missed** that **op**por**tu**ni**ty**.", ipa: "/ju ˈʃʊdənt hæv mɪst ðæt ˌɑpərˈtuːnɪti/", start: 143.070, end: 145.220 },
+  { id: "PART45-07", originalIdx: 40, type: "START", kr: "A: 그 직장 제안을 받아야 할까, 아니면 더 좋은 기회를 기다려야 할까?", en: "Should I **take** the **job** **of**fer or **wait** for a **bet**ter **op**por**tu**ni**ty?", ipa: "/ʃʊd aɪ take ðə ʤɑb ˈɔ·fər ɔr weɪt fɔr ə ˈbɛ·tər ˌɑ·pərˈtu·nə·ti?/", start: 145.220, end: 149.230 },
+  { id: "PART45-07", originalIdx: 41, type: "START", kr: "B: 내 생각엔 그 제안을 받아야 해. 좋은 기회야.", en: "I **think** you should **take** the **of**fer. It’s a **good** **op**por**tu**ni**ty.", ipa: "/aɪ θɪŋk ju ʃʊd teɪk ðə ˈɑfər. ɪts ə ɡʊd ˌɑpərˈtu·nɪti/", start: 149.230, end: 155.030 },
+  { id: "PART47-01", originalIdx: 42, type: "START", kr: "A: 오늘 저녁에 외식할래요?", en: "Would you **like** to **go** **out** for **din**ner to**night**?", ipa: "/wʊd ju laɪk tə ɡoʊ aʊt fɔːr ˈdɪnər təˈnaɪt?/", start: 155.030, end: 157.230 },
+  { id: "PART47-01", originalIdx: 43, type: "START", kr: "B: 그러고 싶지만 일을 좀 끝내야 해서요. 대신 내일 하면 안 될까요?", en: "I’d **love** to but I **have** to **fin**ish some **work**. Can we **do** it to**mor**row in**stead**?", ipa: "/aɪd lʌv tə bʌt aɪ hæv tə ˈfɪn융 sʌm wɜːrk. kæn wi duː ɪt təˈmɑroʊ ɪnˈsted?/", start: 157.230, end: 164.150 },
+  { id: "PART47-06", originalIdx: 44, type: "START", kr: "A: 제가 들은 새로운 레스토랑에 가보실래요?", en: "Would you **like** to **try** this **new** **res**tau**rant** I **heard** a**bout**?", ipa: "/wʊd jʊ laɪk tə traɪ ðɪs nu ˈrestərɑnt aɪ hɜːrd əˈbaʊt?/", start: 164.150, end: 167.150 },
+  { id: "PART47-06", originalIdx: 45, type: "START", kr: "B: 사실, 오늘 밤에 제가 좋아하는 초밥집에 가고 싶어요. 대신 그렇게 하면 안 될까요?", en: "Actually, I’d **like** to **go** to my **fa**vor**ite** **su**shi **place** to**night**. Can we **do** **that** in**stead**?", ipa: "/ˈækʃuəli, aɪd laɪk tə ɡoʊ tə maɪ ˈfeɪvərɪt ˈsuːʃi pleɪs təˈnaɪt. kæn wi duː ðæt ɪnˈsted?/", start: 167.150, end: 173.190 },
+  { id: "PART47-07", originalIdx: 46, type: "START", kr: "A: 짐 들어드릴까요?", en: "Would you **like** **me** to **help** you with your **lug**gage?", ipa: "/wʊd ju laɪk mi tə help ju wɪð jʊər ˈlʌɡɪdʒ?/", start: 173.190, end: 177.010 },
+  { id: "PART47-07", originalIdx: 47, type: "START", kr: "B: 정말 친절하시네요, 고마워요!", en: "**Oh**, that’s **ve**ry **kind** of you, **thank** you!", ipa: "/oʊ, ðæts ˈveri kaɪnd ʌv ju, θæŋk juː/", start: 177.010, end: 181.190 }
+];
+
+let currentPracticeData = [...DATA];
+let userStatus = {}; 
+let activeFilters = new Set(['all']); 
+let currentPlaybackRate = 1.0; 
+let audioTimer = null; 
+
+const nativePlayer = document.getElementById('native-player');
+let recBuffers = {}; 
+let mediaRecorder = null;
+let chunks = [];
+let currentAudio = null; 
+let practiceIdx = 0;
+
+function formatBold(text) { 
+  if(!text) return '';
+  return text.replace(/\*\*(.*?)\*\*/g, '<b>$1</b>'); 
+}
+
+function buildLearnMode() {
+  const container = document.getElementById('learn-list-container');
+  if(!container) return;
+  let html = '';
+  DATA.forEach(item => {
+    const typeClass = item.type ? item.type.toLowerCase() : 'start';
+    const typeText = item.type ? item.type : 'START';
+    const typeBadge = `<span class="badge ${typeClass}">${typeText} 블록</span>`;
+    const partBadge = `<span class="badge part-num">${item.id}</span>`;
+    
+    html += `
+      <div class="list-item" id="learn-item-${item.originalIdx}" onclick="playNativeSegment(${item.start}, ${item.end}, ${item.originalIdx})">
+        <div class="badge-row">
+          ${typeBadge}
+          ${partBadge}
+        </div>
+        <div class="kr-box">${item.kr || ''}</div>
+        <div class="en-box">${formatBold(item.en)}</div>
+        <div class="ipa-box">${item.ipa || ''}</div>
+      </div>`;
+  });
+  container.innerHTML = html;
+}
+
+function playNativeSegment(start, end, highlightIdx = null) {
+  clearTimeout(audioTimer);
+  nativePlayer.pause();
+  
+  nativePlayer.playbackRate = currentPlaybackRate;
+  nativePlayer.currentTime = start;
+  
+  document.querySelectorAll('.list-item').forEach(el => el.classList.remove('playing-now'));
+  if (highlightIdx !== null) {
+    const activeEl = document.getElementById(`learn-item-${highlightIdx}`);
+    if (activeEl) activeEl.classList.add('playing-now');
+  }
+
+  nativePlayer.play().catch(e => console.log("재생 대기 딜레이 감지:", e));
+
+  const duration = (end - start) / currentPlaybackRate;
+  audioTimer = setTimeout(() => {
+    nativePlayer.pause();
+    if (highlightIdx !== null) {
+      const activeEl = document.getElementById(`learn-item-${highlightIdx}`);
+      if (activeEl) activeEl.classList.remove('playing-now');
+    }
+  }, duration * 1000);
+}
+
+function setGlobalSpeed(rate, btnElement) {
+  currentPlaybackRate = rate;
+  document.querySelectorAll('.speed-btn').forEach(btn => btn.classList.remove('active'));
+  
+  if (btnElement) {
+    btnElement.classList.add('active');
+  } else {
+    document.querySelectorAll(`.speed-btn-group button`).forEach(btn => {
+      if (parseFloat(btn.innerText.replace('x', '')) === rate) {
+        btn.classList.add('active');
+      }
+    });
+  }
+}
+
+function buildPracticeMode() {
+  const card = document.getElementById('practice-card');
+  if(!card) return;
+  
+  if (currentPracticeData.length === 0) {
+    card.innerHTML = `<div style="text-align:center; padding: 50px 10px; color: var(--muted); font-weight:700; line-height:1.5;">⚠️ 현재 선택한 성취도 필터에 조건이 맞는 문장이 없습니다.<br>상단 필터에서 다른 상태를 추가로 선택해 보세요.</div>`;
+    document.getElementById('prev-btn').disabled = true;
+    document.getElementById('next-btn').disabled = true;
+    return;
+  }
+  
+  if (practiceIdx >= currentPracticeData.length) practiceIdx = 0;
+  if (practiceIdx < 0) practiceIdx = 0;
+
+  const item = currentPracticeData[practiceIdx];
+  const typeClass = item.type ? item.type.toLowerCase() : 'start';
+  const typeText = item.type ? item.type : 'START';
+  const typeBadge = `<span class="badge ${typeClass}">${typeText} 블록</span>`;
+  const partBadge = `<span class="badge part-num">${item.id}</span>`;
+  const savedStatus = userStatus[item.originalIdx] || '';
+  
+  card.innerHTML = `
+    <div class="badge-row">
+      <span class="badge num">문장 ${practiceIdx + 1} / ${currentPracticeData.length}</span>
+      ${typeBadge}
+      ${partBadge}
+    </div>
+    <div class="p-kr">${item.kr || ''}</div>
+    <button class="p-reveal-btn" id="reveal-btn" onclick="revealAnswer()">정답 확인 & 모범 IPA 보기</button>
+    <div class="p-result" id="practice-result" style="display:none;">
+      <div class="en-box">${formatBold(item.en)}</div>
+      <div class="ipa-box">${item.ipa || ''}</div>
+    </div>
+    <div class="audio-controls">
+      <button class="audio-btn btn-native" onclick="playNativeSegment(${item.start}, ${item.end})">🔊 원어민 음성 듣기</button>
+      <button class="audio-btn btn-rec" id="rec-btn" onclick="toggleRecord()">🎤 녹음 시작</button>
+      <button class="audio-btn btn-play" id="play-btn" onclick="playRecord()" disabled>▶️ 내 발음 듣기</button>
+    </div>
+    
+    <div class="status-section">
+      <div class="status-title">🎯 현재 문장 발화 성취도 체크</div>
+      <div class="status-group">
+        <button class="status-btn ${savedStatus === 'pass' ? 'active' : ''}" data-status="pass" onclick="selectStatus('pass')">통과 🟢</button>
+        <button class="status-btn ${savedStatus === 'pron' ? 'active' : ''}" data-status="pron" onclick="selectStatus('pron')">발음 🟡</button>
+        <button class="status-btn ${savedStatus === 'stut' ? 'active' : ''}" data-status="stut" onclick="selectStatus('stut')">버벅 🟠</button>
+        <button class="status-btn ${savedStatus === 'fail' ? 'active' : ''}" data-status="fail" onclick="selectStatus('fail')">불가 🔴</button>
+      </div>
+    </div>`;
+    
+  updateNav();
+  if (recBuffers[item.originalIdx]) document.getElementById('play-btn').disabled = false;
+}
+
+function selectStatus(status) {
+  if (currentPracticeData.length === 0) return;
+  const item = currentPracticeData[practiceIdx];
+  if (userStatus[item.originalIdx] === status) {
+    delete userStatus[item.originalIdx];
+  } else {
+    userStatus[item.originalIdx] = status;
+  }
+  
+  const card = document.getElementById('practice-card');
+  const savedStatus = userStatus[item.originalIdx] || '';
+  const btns = card.querySelectorAll('.status-btn');
+  btns.forEach(btn => {
+    btn.classList.toggle('active', btn.getAttribute('data-status') === savedStatus);
+  });
+}
+
+function selectFilter(filterType) {
+  if (filterType === 'all') {
+    activeFilters.clear();
+    activeFilters.add('all');
+  } else {
+    activeFilters.delete('all');
+    if (activeFilters.has(filterType)) {
+      activeFilters.delete(filterType);
+      if (activeFilters.size === 0) activeFilters.add('all'); 
+    } else {
+      activeFilters.add(filterType);
+    }
+  }
+  
+  const chips = document.querySelectorAll('.chip-btn');
+  chips.forEach(chip => {
+    const type = chip.getAttribute('data-filter');
+    chip.classList.toggle('active', activeFilters.has(type));
+  });
+  
+  applySequence();
+}
+
+function toggleRandom(isRandom) {
+  applySequence();
+}
+
+function applySequence() {
+  let list = [...DATA];
+  
+  if (!activeFilters.has('all')) {
+    list = list.filter(item => {
+      const currentItemStatus = userStatus[item.originalIdx] || 'none'; 
+      return activeFilters.has(currentItemStatus);
+    });
+  }
+  
+  const isRandom = document.getElementById('random-toggle').checked;
+  if (isRandom && list.length > 0) {
+    for (let i = list.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [list[i], list[j]] = [list[j], list[i]];
+    }
+  }
+  
+  currentPracticeData = list;
+  practiceIdx = 0;
+  buildPracticeMode();
+}
+
+function revealAnswer() {
+  const res = document.getElementById('practice-result');
+  const btn = document.getElementById('reveal-btn');
+  if(res) res.style.display = 'block';
+  if(btn) btn.style.display = 'none';
+}
+
+function movePractice(dir) {
+  practiceIdx += dir;
+  buildPracticeMode();
+}
+
+function updateNav() {
+  const prev = document.getElementById('prev-btn');
+  const next = document.getElementById('next-btn');
+  if(!prev || !next) return;
+  
+  prev.disabled = (practiceIdx <= 0);
+  next.disabled = (practiceIdx >= currentPracticeData.length - 1);
+}
+
+function switchMode(mode) {
+  document.getElementById('tab-learn').classList.toggle('active', mode === 'learn');
+  document.getElementById('tab-practice').classList.toggle('active', mode === 'practice');
+  document.getElementById('page-learn').classList.toggle('active', mode === 'learn');
+  document.getElementById('page-practice').classList.toggle('active', mode === 'practice');
+  
+  clearTimeout(audioTimer);
+  nativePlayer.pause();
+  document.querySelectorAll('.list-item').forEach(el => el.classList.remove('playing-now'));
+}
+
+async function toggleRecord() {
+  const btn = document.getElementById('rec-btn');
+  if (currentPracticeData.length === 0) return;
+  const currentItem = currentPracticeData[practiceIdx];
+  if (!mediaRecorder || mediaRecorder.state === "inactive") {
+    chunks = [];
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      
+      let options = {};
+      if (MediaRecorder.isTypeSupported('audio/webm; codecs=opus')) {
+        options = { mimeType: 'audio/webm; codecs=opus' };
+      } else if (MediaRecorder.isTypeSupported('audio/mp4')) {
+        options = { mimeType: 'audio/mp4' };
+      }
+      
+      mediaRecorder = new MediaRecorder(stream, options);
+      mediaRecorder.ondataavailable = e => { if (e.data.size > 0) chunks.push(e.data); };
+      mediaRecorder.onstop = () => {
+        const blob = new Blob(chunks, { type: mediaRecorder.mimeType });
+        recBuffers[currentItem.originalIdx] = blob;
+        const playBtn = document.getElementById('play-btn');
+        if(playBtn) playBtn.disabled = false;
+      };
+      
+      mediaRecorder.start();
+      btn.textContent = "⏹️ 녹음 중지";
+      btn.classList.add('recording');
+    } catch (err) { 
+      alert("마이크 권한 허용이 필요하거나 지원하지 않는 환경입니다: " + err); 
+    }
+  } else {
+    setTimeout(() => {
+      if (mediaRecorder && mediaRecorder.state !== "inactive") {
+        mediaRecorder.stop();
+        mediaRecorder.stream.getTracks().forEach(track => track.stop());
+      }
+      btn.textContent = "🎤 다시 녹음";
+      btn.classList.remove('recording');
+    }, 200);
+  }
+}
+
+function playRecord() {
+  if (currentPracticeData.length === 0) return;
+  const currentItem = currentPracticeData[practiceIdx];
+  const blob = recBuffers[currentItem.originalIdx];
+  if (blob) {
+    const audioUrl = URL.createObjectURL(blob);
+    if (currentAudio) {
+      currentAudio.pause();
+      currentAudio = null;
+    }
+    currentAudio = new Audio();
+    currentAudio.src = audioUrl;
+    currentAudio.load(); 
+    currentAudio.play().catch(e => {
+      alert("재생 오류 발생: " + e.name + "\nTip: 마이크 권한이나 브라우저 보안 설정을 확인해 보세요.");
+    });
+  }
+}
+
+buildLearnMode();
+buildPracticeMode();
+</script>
+</body>
+</html>
